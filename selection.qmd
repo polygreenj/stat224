@@ -1,0 +1,81 @@
+---
+title: "Variable Selection"
+author: "PYJ"
+format: pdf
+editor: visual
+---
+
+## Variable Selection
+
+-   Core: Mean Squared Error: MSE($\hat{\beta}$) = $E[(\hat{\beta} - \beta)^2]$
+
+    -   MSE = Variance + $(Bias)^2$
+
+    -   When we miss necessary predictors: gain a smaller variance (intuitively, deleting variables cannot increase the variance); also get a biased estimates (how large is the bias depends on what's the $X_j$
+
+    -   Variance-Bias Trade-off: compare the increment in $(Bias)^2$ and the reduction in variance, vice versa.
+
+-   Model Comparison Methods
+
+    -   Nested model: F test -\> they follow F distribution
+
+        -   Example: $$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \varepsilon$$
+
+    -   Any two models w/ the same response
+
+        -   Similar to nested, but not nested
+
+            -   MSE (SSE/(n-p-1))
+
+            -   AIC (Akaike) = $n log_e({SSE}_p/n) + 2p$
+
+            -   BIC (Bayesian) = $n \log_e (SSE_p / n) + p\log_e(n)$
+
+    -   Any two models w/ the same response but possibly differently transformed
+
+        -   Example: $log(Y) = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \varepsilon$, $\sqrt{Y} = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \varepsilon$
+
+-   Forward Selection (FS): \$2\^q\$ subsets
+
+-   Backward Elimination (BE): \$2\^q\$ subsets
+
+-   Stepwise Selection (SW): each iteration choose the lowest AIC or BIC; stop when no candidate can lower the score
+
+Coding Example
+
+```{r}
+p160 = read.table("P160.txt", h = T)
+```
+
+```{r}
+pairs(p160, gap = 0, oma = c(2, 2, 2, 2))
+# quick visualization of how variables correlated
+```
+
+```{r}
+# BE, include everything at the beginning
+step(lm(V ~ I + D + W + G + P + N, data = p160), test = "F")
+# we are using F test here to compare current model with the potential model, the score is still based on AIC
+```
+
+BE stops when there's only D and P included in this model.
+
+```{r}
+summary(lm(V ~ D + P, data = p160))
+```
+
+```{r}
+# Forward selection
+step(lm(V ~ 1, data = p160), scope = V ~ I + D + W + G + P + N, direction = "forward", test = "F")
+```
+
+Only D and P included in the model.
+
+```{r}
+# stepwise
+step(lm(V ~ D + W, data = p160), scope = V~ I + D + W + G + P + N, direction = "both", test = "F")
+```
+
+Difference between using AIC and BIC in programming: substitute 2 to $\log_e (n)$, therefore, need to specify k = log(n) as last command.
+
+FS, BE, SW may not choose the same model: Highly correlated predictors can cause variables to appear significant in one method but not in another; order dependency exists.
